@@ -1,4 +1,4 @@
-kpi,pregunta,como_se_calcula,dueno,usable_si
-ingresos,Cuanto vendimos este mes?,suma de monto_neto,finanzas,la fuente tiene menos de 2 dias
-clientes_activos,Quien compro en los ultimos 90 dias?,contar clientes con compra reciente,comercial,no hay filas vacias de fecha
-menciones,De que se habla de la marca?,contar filas de menciones,marca,la ultima mencion no tiene mas de 3 dias
+kpi,pregunta,como_se_calcula,dueno,fuente,usable_si
+ingresos,¿Cuánto vendimos este mes?,suma de monto_neto,finanzas,data/ventas.csv,la última fila tiene 2 días o menos
+clientes_activos,¿Quién compró en los últimos 90 días?,contar clientes con compra reciente,comercial,data/clientes.csv,no hay filas con fecha vacía
+menciones,¿De qué se habla de la marca?,contar filas de menciones,marca,data/menciones.csv,la última mención tiene 3 días o menos
