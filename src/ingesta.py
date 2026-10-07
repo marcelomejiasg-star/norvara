@@ -6,6 +6,7 @@ Uso, desde la carpeta norvara:
 
     python3 src/ingesta.py data/pedidos.csv
     python3 src/ingesta.py data/pedidos.json
+    python3 src/ingesta.py https://jsonplaceholder.typicode.com/posts?_limit=3
 """
 
 from __future__ import annotations
@@ -78,6 +79,25 @@ def abrir_excel(ruta: Path) -> dict:
     }
 
 
+def aplanar(datos: object, nombre: str) -> dict:
+    """Convierte una lista de objetos en filas y columnas."""
+    if not isinstance(datos, list) or not datos or not isinstance(datos[0], dict):
+        return {
+            "ok": False,
+            "archivo": nombre,
+            "nota": "no es una lista de objetos",
+            "filas": 0,
+            "columnas": [],
+        }
+    return {
+        "ok": True,
+        "archivo": nombre,
+        "nota": "se pudo leer",
+        "filas": len(datos),
+        "columnas": list(datos[0].keys()),
+    }
+
+
 def abrir_json(ruta: Path) -> dict:
     """Lee un JSON de lista de objetos y lo aplana a columnas.
 
@@ -93,23 +113,19 @@ def abrir_json(ruta: Path) -> dict:
             "filas": 0,
             "columnas": [],
         }
-    datos = json.loads(ruta.read_text(encoding="utf-8"))
-    if not isinstance(datos, list) or not datos or not isinstance(datos[0], dict):
-        return {
-            "ok": False,
-            "archivo": ruta.name,
-            "nota": "no es una lista de objetos",
-            "filas": 0,
-            "columnas": [],
-        }
-    columnas = list(datos[0].keys())
-    return {
-        "ok": True,
-        "archivo": ruta.name,
-        "nota": "se pudo leer",
-        "filas": len(datos),
-        "columnas": columnas,
-    }
+    return aplanar(json.loads(ruta.read_text(encoding="utf-8")), ruta.name)
+
+
+def abrir_api(url: str) -> dict:
+    """Pide una URL pública y aplana el JSON que vuelve.
+
+    No guarda la clave de nadie. La dirección de práctica no pide clave.
+    """
+    from urllib.request import urlopen
+
+    with urlopen(url, timeout=20) as respuesta:
+        datos = json.loads(respuesta.read().decode("utf-8"))
+    return aplanar(datos, url)
 
 
 def abrir(ruta: Path) -> dict:
@@ -137,7 +153,11 @@ def main() -> None:
     if len(sys.argv) != 2:
         print("pasá la ruta del archivo. ejemplo: python3 src/ingesta.py data/pedidos.csv")
         sys.exit(1)
-    print(informe(abrir(Path(sys.argv[1]))))
+    pedido = sys.argv[1]
+    if pedido.startswith("http://") or pedido.startswith("https://"):
+        print(informe(abrir_api(pedido)))
+        return
+    print(informe(abrir(Path(pedido))))
 
 
 if __name__ == "__main__":
