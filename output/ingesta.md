@@ -1,6 +1,6 @@
 # Inventario de ingesta
 
-archivo: pedidos.db
-estado: se pudo leer la tabla pedidos
+archivo: pedidos.xlsx
+estado: se pudo leer
 filas: 3
 columnas: fecha, pedido, monto
