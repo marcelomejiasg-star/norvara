@@ -6,6 +6,7 @@ Uso, desde la carpeta norvara:
 
     python3 src/ingesta.py data/pedidos.csv
     python3 src/ingesta.py data/pedidos.json
+    python3 src/ingesta.py data/pedidos.db
     python3 src/ingesta.py https://jsonplaceholder.typicode.com/posts?_limit=3
 """
 
@@ -128,12 +129,55 @@ def abrir_api(url: str) -> dict:
     return aplanar(datos, url)
 
 
+def abrir_sqlite(ruta: Path) -> dict:
+    """Lee la primera tabla de un archivo SQLite.
+
+    No es un servidor. Es un archivo. Postgres, más adelante, se lee
+    igual: una tabla, filas y columnas. Cambia la conexión.
+    """
+    import sqlite3
+
+    if not ruta.exists():
+        return {
+            "ok": False,
+            "archivo": ruta.name,
+            "nota": "no está el archivo",
+            "filas": 0,
+            "columnas": [],
+        }
+    with sqlite3.connect(ruta) as con:
+        tabla = con.execute(
+            "select name from sqlite_master where type = 'table' order by name"
+        ).fetchone()
+        if tabla is None:
+            return {
+                "ok": False,
+                "archivo": ruta.name,
+                "nota": "no hay tablas",
+                "filas": 0,
+                "columnas": [],
+            }
+        nombre = tabla[0]
+        cursor = con.execute(f"select * from {nombre}")
+        columnas = [d[0] for d in cursor.description]
+        filas = cursor.fetchall()
+    return {
+        "ok": True,
+        "archivo": ruta.name,
+        "nota": f"se pudo leer la tabla {nombre}",
+        "filas": len(filas),
+        "columnas": columnas,
+    }
+
+
 def abrir(ruta: Path) -> dict:
     sufijo = ruta.suffix.lower()
     if sufijo in {".xlsx", ".xls"}:
         return abrir_excel(ruta)
     if sufijo == ".json":
         return abrir_json(ruta)
+    if sufijo == ".db":
+        return abrir_sqlite(ruta)
     return abrir_csv(ruta)
 
 
