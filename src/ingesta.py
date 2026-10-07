@@ -202,12 +202,40 @@ def guardar_inventario(texto: str) -> Path:
     return salida
 
 
+def leer_fuentes(plantilla: Path) -> list[tuple[str, str]]:
+    """Lee de kpis.csv el nombre del KPI y el archivo que declara."""
+    with plantilla.open(newline="", encoding="utf-8") as f:
+        lector = csv.DictReader(f)
+        return [(fila["kpi"], fila["fuente"]) for fila in lector]
+
+
+def inventario_plantilla(plantilla: Path = Path("metrics/kpis.csv")) -> str:
+    """Abre cada fuente de la plantilla y arma un inventario.
+
+    No calcula el semáforo. Solo dice si el archivo declarado se puede leer.
+    """
+    partes = ["# Inventario de ingesta", ""]
+    for kpi, fuente in leer_fuentes(plantilla):
+        partes.append(f"## {kpi}")
+        partes.append(informe(abrir(Path(fuente))))
+        partes.append("")
+    return "\n".join(partes).rstrip() + "\n"
+
+
 def main() -> None:
     import sys
 
     if len(sys.argv) != 2:
-        print("pasá la ruta del archivo. ejemplo: python3 src/ingesta.py data/pedidos.csv")
+        print("pasá la ruta del archivo, o --plantilla")
         sys.exit(1)
+    if sys.argv[1] == "--plantilla":
+        texto = inventario_plantilla()
+        salida = Path("output") / "ingesta.md"
+        salida.parent.mkdir(exist_ok=True)
+        salida.write_text(texto, encoding="utf-8")
+        print(texto)
+        print(f"guardado: {salida}")
+        return
     pedido = sys.argv[1]
     if pedido.startswith("http://") or pedido.startswith("https://"):
         texto = informe(abrir_api(pedido))
