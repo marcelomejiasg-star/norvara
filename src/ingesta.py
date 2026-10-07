@@ -191,6 +191,17 @@ def informe(resultado: dict) -> str:
     )
 
 
+def guardar_inventario(texto: str) -> Path:
+    """Deja el informe en output, sin tocar el brief.
+
+    La ingesta solo anota qué entró. El semáforo sigue en output/brief.md.
+    """
+    salida = Path("output") / "ingesta.md"
+    salida.parent.mkdir(exist_ok=True)
+    salida.write_text("# Inventario de ingesta\n\n" + texto + "\n", encoding="utf-8")
+    return salida
+
+
 def main() -> None:
     import sys
 
@@ -199,9 +210,11 @@ def main() -> None:
         sys.exit(1)
     pedido = sys.argv[1]
     if pedido.startswith("http://") or pedido.startswith("https://"):
-        print(informe(abrir_api(pedido)))
-        return
-    print(informe(abrir(Path(pedido))))
+        texto = informe(abrir_api(pedido))
+    else:
+        texto = informe(abrir(Path(pedido)))
+    print(texto)
+    print(f"guardado: {guardar_inventario(texto)}")
 
 
 if __name__ == "__main__":
